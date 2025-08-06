@@ -9,6 +9,7 @@ from langchain.vectorstores.utils import filter_complex_metadata
 from langchain_community.document_loaders.generic import GenericLoader
 from langchain_community.document_loaders.parsers import LanguageParser
 from langchain_text_splitters import Language
+from langchain.document_loaders import TextLoader
 
 class ChatCode:
     chain = None
@@ -27,18 +28,28 @@ class ChatCode:
         )
 
     def ingest(self, path: str):
-        
-        loader = GenericLoader.from_filesystem(
-            path,
-            glob="**/[!.]*",
-            suffixes=[".rb"],
-            parser=LanguageParser(),
+        # For a single log file
+        if path.endswith('.log') or path.endswith('.txt'):
+            loader = TextLoader(path)
+            documents = loader.load()
+        else:
+            # For a directory containing log files
+            loader = GenericLoader.from_filesystem(
+                path,
+                glob="**/[!.]*",
+                suffixes=[".log", ".txt"],  # Common log file extensions
+                parser=None,  # Use default text parser for logs
+            )
+            documents = loader.load()
+
+        # Use a simple text splitter for log files (no language-specific splitting)
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=1024, 
+            chunk_overlap=100,
+            separators=["\n\n", "\n", " ", ""]  # Split on paragraphs, lines, then words
         )
 
-        text_splitter = RecursiveCharacterTextSplitter.from_language(
-            language=Language.RUBY, chunk_size=1024, chunk_overlap=100)
-
-        chunks = text_splitter.split_documents(loader.load())
+        chunks = text_splitter.split_documents(documents)
         chunks = filter_complex_metadata(chunks)
 
         vector_store = Chroma.from_documents(documents=chunks, embedding=FastEmbedEmbeddings())
