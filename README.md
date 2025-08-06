@@ -14,3 +14,5 @@ Set up is easy! Just run
 ```bash
 % pip install langchain langchain-community
 ```
+
+<img width="763" height="792" alt="Screenshot from 2025-08-07 04-29-45" src="https://github.com/user-attachments/assets/8a9ef550-0f08-4e41-995c-c273ca03bee3" />
